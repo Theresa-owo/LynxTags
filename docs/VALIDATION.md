@@ -36,3 +36,21 @@ JAR SHA-256：`00353B9158E414B7DAEE5B90A4B431874272DFF9CB2340DA4A85419A7181C5C4`
 未测试全部 GUI 比例、资源包、创造库存页或用户列出的 Freecam/Freelook/Sodium/Iris/Entity Culling 等组合。
 没有 Fabric/Bukkit/Paper 或其它 Minecraft 版本实现；第一人称不显示自身 Tag，没有 HUD 替代方案。
 基础 Gradle 开发运行 classpath 含编译依赖，客户端代码与图形路径已实测，交付 JAR 的打包内容另行检查；不把这些声明成所有发行环境均已验证。
+
+## 1.0.1 补充验证（2026-10-11）
+
+- 构建与 verification 编译通过。独立真实客户端连接 loopback 测试服，收到原生 RGB 协议。
+- F5 前后视角、第一人称自身隐藏、命名生物保留及创造物品栏 Inventory 标签全部通过。
+- 创造物品栏验证明确选择库存标签；初次验证停在建筑方块标签导致无人物预览，已修正验证脚本。
+- YSM 2.6.5 在开发启动器中原生库加载失败（err 54），该次测试不计为 YSM 自定义模型验收。
+  用户实际启动器及模型下仍需复验；未替换用户正在运行的客户端文件。
+- 服务器未开启 `[nametags] enabled` 时不会有 LP 格式。TAB 的另一套格式不能证明协议已启用。
+- 证据：`validation/1.0.1-client.log`、`validation/1.0.1-creative-inventory.png`。
+
+## 1.0.2 补充验证（2026-10-11）
+
+- 构建、verification 编译、独立真实客户端连接通过；F5前后、第一人称自身隐藏和命名生物保留继续通过。
+- 创造库存预览测试移动鼠标改变人物朝向，名牌仍由原生管线提交，截图确认左右朝向/倾斜随人物变化。
+- 客户端实际收到一次完整格式的加入消息，原版加入消息计数为0。
+- YSM特定模型仍需用户发行环境复验，没有重试先前开发启动器的 native err54。
+- 证据：`validation/1.0.2-rotation-client.log`、`validation/1.0.2-inventory-left.png`、`validation/1.0.2-inventory-right.png`。

@@ -14,7 +14,7 @@ Minecraft **26.1.2 / NeoForge 26.1.2.115** 的客户端玩家名牌 Mod，作者
 
 ## 安装
 
-Java 25、Minecraft 26.1.2、NeoForge 26.1.2.115；将 `LynxTags-1.0.0.jar` 放入客户端 `mods/`。
+Java 25、Minecraft 26.1.2、NeoForge 26.1.2.115；将 `LynxTags-1.0.2.jar` 放入客户端 `mods/`。
 Kotlin stdlib 2.3.20 已内嵌，不需要额外 Kotlin 前置。此 Mod 替代 Perspective Nametag，不建议同时安装两个自身名牌控制器。
 
 服务器不安装 LynxTags。需要 LP 格式时安装 LynxTools 与 LuckPerms，并在服务端 Config.toml 启用：
@@ -22,9 +22,10 @@ Kotlin stdlib 2.3.20 已内嵌，不需要额外 Kotlin 前置。此 Mod 替代 
 ```toml
 [nametags]
 enabled = true
-name_format = "<gradient:#42D9E8:#B58AFF><name></gradient>"
+name_format = "<gradient:#42D9E8:#B58AFF><label></gradient>"
 ```
 
+`<label>` 需要 LynxTools 1.0.2：将前缀、名字、后缀以空格组合，再应用一次渐变；旧服务端只支持 `<name>`。
 执行 `/lynxtools reload`。服务端读取 LuckPerms 当前上下文前后缀并解析颜色/渐变，再发送安全文本样式。
 例如 LP 前缀 `<gradient:#42D9E8:#B58AFF>[Admin]</gradient> `；前后缀各自解析，`<name>` 是安全用户名占位符。
 没有协议时回退原生 displayName；不伪造 LuckPerms 数据，不要求其他玩家安装客户端扩展。
@@ -38,6 +39,7 @@ NeoForge 配置文件 `config/lynxtags-client.toml`：
 | enabled | true | 总开关 |
 | show_self_third_person | true | 自身第三人称名牌 |
 | inventory | true | 物品栏人物预览 |
+| inventory_follow_rotation | true | 预览名牌跟随人物躯干朝向及鼠标带动的倾斜；关闭则保留原先面向相机的文字 |
 | server_format | true | 使用可选服务端格式 |
 | inventory_model_scale | 0.8 | 预览模型倍率，0.4–1.0 |
 
@@ -51,7 +53,7 @@ NeoForge 配置文件 `config/lynxtags-client.toml`：
 不修改客户端/服务端 Mod 列表要求。当前仅支持所列 NeoForge/MC 版本；Fabric/Bukkit/Paper 及其它版本尚未实现。
 
 构建：PowerShell 7、JDK 25，执行 `./gradlew.ps1 build sourceArchive --console=plain`。
-工具链：Gradle 9.2.1、Kotlin 2.3.20、ModDevGradle 2.0.148。产物 `build/libs/LynxTags-1.0.0.jar`。
+工具链：Gradle 9.2.1、Kotlin 2.3.20、ModDevGradle 2.0.148。产物 `build/libs/LynxTags-1.0.2.jar`。
 独立验证代码不进入生产 JAR。结果与限制见 [docs/VALIDATION.md](docs/VALIDATION.md)。
 
 ## 许可

@@ -3,6 +3,8 @@ package net.ciyuan.lynxtags
 import net.ciyuan.lynxtags.protocol.TagUpdate
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.entity.state.EntityRenderState
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState
+import net.minecraft.client.renderer.state.level.CameraRenderState
 import net.minecraft.client.gui.screens.inventory.InventoryScreen
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen
 import net.minecraft.network.chat.Component
@@ -20,6 +22,22 @@ object ClientTags {
     private data class PlayerLabel(val text:Component,val attachment:Vec3)
     private val players=WeakHashMap<EntityRenderState,PlayerLabel>()
     private val previews=WeakHashMap<EntityRenderState,Float>()
+    fun captureInventory(player:Player,state:EntityRenderState) {
+        if(!ClientConfig.enabled.get() || !ClientConfig.inventory.get()) return
+        val text=if(ClientConfig.serverFormat.get()) names[player.uuid] ?: player.displayName else player.displayName
+        val attachment=player.attachments.getNullable(EntityAttachment.NAME_TAG,0,player.yRot) ?: Vec3(0.0,player.bbHeight.toDouble(),0.0)
+        players[state]=PlayerLabel(text,attachment)
+    }
+    /** Model mods may clear the preview name after extraction. Restore at the native submit boundary. */
+    fun beforeSubmit(state:EntityRenderState) {
+        if(!ClientConfig.enabled.get()) return
+        val label=players[state] ?: return
+        if(state in previews && ClientConfig.inventory.get()) {
+            state.nameTag=label.text; state.nameTagAttachment=label.attachment; state.scoreText=null
+        } else if(state.nameTag!=null && ClientConfig.serverFormat.get()) {
+            state.nameTag=label.text
+        }
+    }
     fun clear() { names.clear(); players.clear(); previews.clear() }
     fun receive(update:TagUpdate) {
         TagUpdate.validate(update.spans)
@@ -74,8 +92,14 @@ object ClientTags {
         pose.pushPose()
         pose.scale(factor,factor,factor)
         val anchor=Vec3(point.x/factor,(point.y+0.5)/factor-0.5,point.z/factor)
+        val body=e.entityRenderState as? LivingEntityRenderState
+        val camera=if(ClientConfig.inventoryFollowRotation.get() && body!=null) CameraRenderState().apply {
+            // UI pose already contains the model tilt. Do not cancel it with the billboard camera.
+            // LivingEntityRenderer rotates the body by (180 - bodyRot); the native text needs another 180.
+            orientation.rotationY(Math.toRadians((360f-body.bodyRot).toDouble()).toFloat())
+        } else e.cameraRenderState
         e.submitNodeCollector.submitNameTag(pose,anchor,0,e.content,!e.entityRenderState.isDiscrete,
-            e.entityRenderState.lightCoords,0.0,e.cameraRenderState)
+            e.entityRenderState.lightCoords,0.0,camera)
         pose.popPose()
     }
 }

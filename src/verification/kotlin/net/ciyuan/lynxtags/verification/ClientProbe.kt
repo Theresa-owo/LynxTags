@@ -26,7 +26,15 @@ class ClientProbe {
     private var mob=0
     private var done=false
     private var lastOwn=""
+    private val joins=mutableListOf<String>()
+    private var vanillaJoins=0
+    private val previewAngles=mutableSetOf<Int>()
     init {
+        NeoForge.EVENT_BUS.addListener<net.neoforged.neoforge.client.event.ClientChatReceivedEvent.System> { e ->
+            if(e.message.string.startsWith("[+]")) joins.add(e.message.string)
+            val content=e.message.contents as? net.minecraft.network.chat.contents.TranslatableContents
+            if(content?.key?.startsWith("multiplayer.player.joined")==true) vanillaJoins++
+        }
         NeoForge.EVENT_BUS.addListener<ClientTickEvent.Post> { tick() }
         NeoForge.EVENT_BUS.addListener<RenderNameTagEvent.DoRender>(EventPriority.LOWEST,true) { e ->
             val p=Minecraft.getInstance().player
@@ -34,6 +42,7 @@ class ClientProbe {
                 own++
                 val mc=Minecraft.getInstance()
                 lastOwn="camera=${mc.options.cameraType}, screen=${mc.screen?.javaClass?.simpleName}, content=${e.content.string}"
+                if(phase==3) (e.entityRenderState as? net.minecraft.client.renderer.entity.state.LivingEntityRenderState)?.let { previewAngles.add(it.bodyRot.toInt()) }
             }
             if(e.content.string.contains("NamedCow")) mob++
         }
@@ -55,6 +64,14 @@ class ClientProbe {
                 mc.options.cameraType=CameraType.THIRD_PERSON_BACK
             }
             age++
+            if(phase==3 && age==30) org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.window.handle(),mc.window.width*0.3,mc.window.height*0.35)
+            if(phase==3 && age==60) capture("inventory-turn-left.png")
+            if(phase==3 && age==65) org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.window.handle(),mc.window.width*0.7,mc.window.height*0.65)
+            if(phase==3 && age==10 && mc.screen is net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen) {
+                val screen=mc.screen!!
+                screen.javaClass.getDeclaredMethod("selectTab",net.minecraft.world.item.CreativeModeTab::class.java).apply { isAccessible=true }
+                    .invoke(screen,net.minecraft.core.registries.BuiltInRegistries.CREATIVE_MODE_TAB.getOrThrow(net.minecraft.world.item.CreativeModeTabs.INVENTORY).value())
+            }
             p.yRot=0f; p.xRot=0f
             mc.options.cameraType=when(phase) { 0 -> CameraType.THIRD_PERSON_BACK; 1 -> CameraType.THIRD_PERSON_FRONT; else -> CameraType.FIRST_PERSON }
             if(System.getProperty("lynxtags.visual")=="true") {
@@ -65,10 +82,10 @@ class ClientProbe {
             if(age==20) { own=0; mob=0 }
             if(age<100) return
             when(phase) {
-                0 -> { check(own>0) { "No self native tag in third person back" }; capture("01-third-person-back.png"); mc.options.cameraType=CameraType.THIRD_PERSON_FRONT }
+                0 -> { check(own>0) { "No self native tag in third person back" }; check(joins.size==1 && joins.single().contains("[Lynx] ${p.gameProfile.name()} [❤]") && vanillaJoins==0) { "Unexpected joins=$joins vanilla=$vanillaJoins" }; log.info("JOIN_MESSAGE_PASSED {}",joins.single()); capture("01-third-person-back.png"); mc.options.cameraType=CameraType.THIRD_PERSON_FRONT }
                 1 -> { check(own>0) { "No self native tag in third person front" }; capture("02-third-person-front.png"); mc.options.cameraType=CameraType.FIRST_PERSON }
                 2 -> { capture("03-first-person.png"); check(own==0) { "Self tag rendered in first person: $lastOwn" }; check(mob>0) { "Vanilla named mob missing" }; mc.setScreen(InventoryScreen(p)) }
-                3 -> { check(own>0) { "No native inventory tag" }; capture("04-inventory.png"); log.info("CLIENT_NATIVE_TAGS_PASSED: live protocol, F5 back/front, first-person self hidden, named mob retained, native inventory tag") }
+                3 -> { check(own>0) { "No native inventory tag" }; check(previewAngles.size>2) { "Preview did not rotate: $previewAngles" }; capture("04-inventory.png"); log.info("CLIENT_NATIVE_TAGS_PASSED: live protocol, F5 back/front, first-person self hidden, named mob retained, native inventory tag; preview angles={}",previewAngles) }
                 4 -> { done=true; mc.stop(); return }
             }
             log.info("CLIENT_PHASE_PASS phase={} nativeSelfSubmits={} namedMobSubmits={}",phase,own,mob)

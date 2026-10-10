@@ -3,7 +3,7 @@ plugins {
     id("net.neoforged.moddev") version "2.0.148"
 }
 group = "net.ciyuan.lynxtags"
-version = "1.0.0"
+version = "1.0.2"
 repositories { mavenCentral() }
 kotlin { jvmToolchain(25) }
 neoForge {
