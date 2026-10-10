@@ -1,0 +1,5 @@
+license="GPL-3.0-or-later"
+[[mods]]
+modId="lynxplain_verification"
+version="1.0.0"
+displayName="Plain NeoForge connection probe"

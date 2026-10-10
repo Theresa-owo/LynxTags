@@ -1,0 +1,11 @@
+license="GPL-3.0-or-later"
+[[mods]]
+modId="lynxtags_verification"
+version="1.0.0"
+displayName="LynxTags native client verification"
+[[dependencies.lynxtags_verification]]
+modId="lynxtags"
+type="required"
+versionRange="[1.0.0]"
+ordering="AFTER"
+side="CLIENT"
